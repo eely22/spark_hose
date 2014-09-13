@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <title>SparkFeed | Spark Publish Visualizations</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Bootstrap -->
+                                
+        <link href="http://198.0.150.9/static/css/bootstrap.min.css" rel="stylesheet">
+
+                                        
+        <style>
+            body {
+                min-height: 200px;
+                padding-top: 10px;
+            }
+            h1, h3, p {
+                margin-left: 50px;
+            }
+            .link {
+                stroke: #000;
+                stroke-width: 1.5px;
+            }
+        
+            .node {
+                fill: #000;
+                stroke: #fff;
+                stroke-width: 1.5px;
+            }
+        </style>
+        
+        
+        <script src="https://code.jquery.com/jquery.js"></script>
+        <script src="http://198.0.150.9/static/js/bootstrap.min.js"></script>
+        
+        
+        <script src="http://198.0.150.9/static/js/d3.v3.min.js"></script>
+        <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                
+            });
+        </script>
+        <script>
+            $(document).ready(function () {
+                var ids = [];
+                              
+                var nodes = [],
+                    links = [];
+                var a = {id: "a"};
+                nodes.push(a);
+                              
+                var source = new EventSource("http://localhost:8080/events");
+                if(typeof(EventSource) !== "undefined") {
+                    console.log("SSE is Supported!");
+                } else {
+                    console.log("SSE is NOT Supported");
+                }
+                console.log("Done");
+                source.addEventListener('message', function(e){
+                    var obj = jQuery.parseJSON(e.data);
+                    if (ids.indexOf(obj.coreid) < 0) {
+                        //random color, courtesy of http://www.paulirish.com/2009/random-hex-color-code-snippets/
+                        var b = {id: Math.floor(Math.random()*16777215).toString(16), size: obj.data.length};
+                        nodes.push(b);
+                        links.push({source: a, target: b});
+                        console.log( 'new core with id ' + obj.coreid + ' and length ' + obj.data.length );
+                        ids.push(obj.coreid);
+                        start();
+                    }
+                }, false);
+                         
+                //modified from http://bl.ocks.org/mbostock/1095795
+                var width = 1260,
+                height = 600;
+            
+                var color = d3.scale.category10();
+            
+                var force = d3.layout.force()
+                    .nodes(nodes)
+                    .links(links)
+                    .charge(-400)
+                    .linkDistance(150)
+                    .size([width, height])
+                    .on("tick", tick);
+            
+                var svg = d3.select("body").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+            
+                var node = svg.selectAll(".node"),
+                  link = svg.selectAll(".link");
+                              
+                function start() {
+                  link = link.data(force.links(), function(d) { return d.source.id + "-" + d.target.id; });
+                  link.enter().insert("line", ".node").attr("class", "link");
+                  link.exit().remove();
+                              
+                  node = node.data(force.nodes(), function(d) { return d.id;});
+                  node.enter().append("circle").attr("class", function(d) { return "node " + d.id; }).attr("r", function(d) { return d.size; });
+                  node.exit().remove();
+                                                 
+                  force.start();
+                }
+                start();
+        
+                function tick() {
+                  node.attr("cx", function(d) { return d.x; })
+                    .attr("cy", function(d) { return d.y; })
+                    .attr("style", function(d) { return 'fill:' + d.id; })
+            
+                  link.attr("x1", function(d) { return d.source.x; })
+                    .attr("y1", function(d) { return d.source.y; })
+                    .attr("x2", function(d) { return d.target.x; })
+                    .attr("y2", function(d) { return d.target.y; });
+            }
+        });
+            </script>
+                                        
+                                
+    </head>
+    <body>
+        <h1>Spark Publish </h1>
+        <h3>Each circle is a unique Core that has published an event. The circle radius is the length of the data field</h3>
+        <p>Hint: Refresh for a unique pattern each time</p>
+        
+        
+    </body>
+</html>
