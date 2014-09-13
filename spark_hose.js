@@ -7,7 +7,7 @@ extend = require('xtend');
 events = require('events');
 eventEmitter = new events.EventEmitter();
 
-app.listen(8080);
+app.listen(80);
 
 serverEvent = serverEvent({ express : app });
 
@@ -26,7 +26,7 @@ app.get('/events', serverEvent, function (req, res) {
     });
 });
 
-app.get('/hose', function (req, res) {
+app.get('/', function (req, res) {
     var uid = req.params.uid,
         path = req.params[0] ? req.params[0] : 'index.html';
     res.sendfile(path, {root: './page'});
@@ -34,10 +34,11 @@ app.get('/hose', function (req, res) {
 
 //get the SSE events from the Spark Hose
 var requestObj = request({
-    uri: 'https://api.spark.io/v1/events?access_token=0873e81cfe01269ff0ef15097d0aa9856bb8e72b',
-    timeout: 9999999,
+    uri: 'https://api.spark.io/v1/events?access_token=b0dd6a0954ee0bb2e489a3e9c6869405e39078ab',
+    timeout: 999999999,
     method: "GET"
 });
+var gotData = false;
 var chunks = [];
 var appendToQueue = function(arr) {
     for(var i=0;i<arr.length;i++) {
@@ -67,13 +68,31 @@ var processItem = function(arr) {
         }
     }
 //    eventEmitter.emit('spark_event', JSON.parse(JSON.stringify(obj)));
-    eventEmitter.emit('spark_event', obj);
-    console.log(JSON.stringify(obj));
+    eventEmitter.emit('spark_event', obj); 
+    gotData = true;
+    //console.log(JSON.stringify(obj));
 };
-
+var onError = function(error) {
+    var currentTime = new Date();
+    //console.log(currentTime.toString('yyyy/mm/dd hh:mm:ss'));
+    console.log(currentTime.toString('yyyy/mm/dd hh:mm:ss') + ": ERROR!");
+    process.exit(code=0);
+};
 var onData = function(event) {
     var chunk = event.toString();
     appendToQueue(chunk.split("\n"));
 };
-
+requestObj.on('error', onError);
 requestObj.on('data', onData);
+
+setInterval(function() {
+  //kind of a WDT, if we don't get data for 5 seconds let's kill ourselves and forever should restart us
+  var currentTime = new Date();
+  if (!gotData) {
+      //console.log(currentTime.toString('yyyy/mm/dd hh:mm:ss'));
+      console.log(currentTime.toString('yyyy/mm/dd hh:mm:ss') + ": NO DATA FOR 5 SECONDS!");
+      process.exit(code=0);
+  }
+  console.log(currentTime.toString('yyyy/mm/dd hh:mm:ss') + ": Kicked the dog");
+  gotData = false;
+}, 5000);
