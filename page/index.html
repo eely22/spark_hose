@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description" content="">
         <meta name="author" content="">
-        <title>SparkFeed | Spark Publish Visualizations</title>
+        <title>Spark Publish Visualizations</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!-- Bootstrap -->
                                 
@@ -19,9 +19,14 @@
                 min-height: 200px;
                 padding-top: 10px;
             }
-            h1, h3, p {
+            h1, h3, h4, p {
+                margin-left: 50px;
+                margin-right: 50px;
+            }
+            svg {
                 margin-left: 50px;
             }
+        
             .link {
                 stroke: #000;
                 stroke-width: 1.5px;
@@ -49,6 +54,7 @@
         <script>
             $(document).ready(function () {
                 var ids = [];
+                var colorAssignments = {};
                               
                 var nodes = [],
                     links = [];
@@ -66,33 +72,44 @@
                     var obj = jQuery.parseJSON(e.data);
                     if (ids.indexOf(obj.coreid) < 0) {
                         //random color, courtesy of http://www.paulirish.com/2009/random-hex-color-code-snippets/
-                        var b = {id: Math.floor(Math.random()*16777215).toString(16), size: obj.data.length};
+                        var color = Math.floor(Math.random()*16777215).toString(16);
+                        colorAssignments[obj.coreid] = color;
+                        var b = {id: color, size: obj.data.length, position: ids.length};
                         nodes.push(b);
                         links.push({source: a, target: b});
-                        console.log( 'new core with id ' + obj.coreid + ' and length ' + obj.data.length );
+                        //console.log( 'new core with id ' + obj.coreid + ' and length ' + obj.data.length );
                         ids.push(obj.coreid);
+                        ping(b);
                         start();
+                    } else {
+                        ping({id: colorAssignments[obj.coreid], size: obj.data.length, position: ids.indexOf(obj.coreid)});
                     }
                 }, false);
                          
-                //modified from http://bl.ocks.org/mbostock/1095795
-                var width = 1260,
+                //force layout modified from http://bl.ocks.org/mbostock/1095795
+                var width = 850,
                 height = 600;
             
-                var color = d3.scale.category10();
-            
+                //declare force layout
                 var force = d3.layout.force()
                     .nodes(nodes)
                     .links(links)
                     .charge(-400)
-                    .linkDistance(150)
+                    .linkDistance(130)
                     .size([width, height])
                     .on("tick", tick);
             
-                var svg = d3.select("body").append("svg")
+                //add force layout
+                var svg = d3.select("#forceLayout").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+                
+                //add ping layout
+                var pingSVG = d3.select("#pingLayout").append("svg")
                     .attr("width", width)
                     .attr("height", height);
             
+                //force layout logic
                 var node = svg.selectAll(".node"),
                   link = svg.selectAll(".link");
                               
@@ -118,17 +135,38 @@
                     .attr("y1", function(d) { return d.source.y; })
                     .attr("x2", function(d) { return d.target.x; })
                     .attr("y2", function(d) { return d.target.y; });
-            }
+                }
+                              
+                //ping layout logic
+                var i = 0;
+                function ping(node) {
+                    pingSVG.append("g").insert("circle", "rect")
+                        .attr("cx", Math.min((node.size*10)+100, width))
+                        .attr("cy", Math.min((node.position*8)+50, height))
+                        .attr("r", 1e-6)
+                        .style("stroke", node.id)
+                        .style("stroke-opacity", 1)
+                        .style("fill", "none")
+                        .style("stroke-width", "10px")
+                      .transition()
+                        .duration(2000)
+                        .ease(Math.sqrt)
+                        .attr("r", 40)
+                        .style("stroke-opacity", 1e-6)
+                        .remove();
+                }
         });
             </script>
                                         
                                 
     </head>
     <body>
-        <h1>Spark Publish </h1>
-        <h3>Each circle is a unique Core that has published an event. The circle radius is the length of the data field</h3>
-        <p>Hint: Refresh for a unique pattern each time</p>
+        <h1>Spark Publish Visualizations</h1>
         
+        <h4>Each circle is the first event from a unique Core. The circle radius is the length of the data field of the first event.</h4>
+        <div id="forceLayout"></div>
+        <h4>Each "ping" is any published event. The X-axis shows the length of the data field and the Y-axis is the order of the Core ID (order it was seen). Each Core is assigned a color and is the same between graphs.</h4>
+        <div id="pingLayout"></div>
         
     </body>
 </html>
