@@ -102,7 +102,7 @@
                         //random color, courtesy of http://www.paulirish.com/2009/random-hex-color-code-snippets/
                         var color = Math.floor(Math.random()*16777215).toString(16);
                         colorAssignments[obj.coreid] = color;
-                        var b = {id: color, size: obj.data.length, position: ids.length, coreid: obj.coreid, data: obj.data};
+                        var b = {id: color, size: obj.data.length, position: ids.length, coreid: obj.coreid, data: obj.data, name: obj.name};
                         nodes.push(b);
                         links.push({source: a, target: b});
                         //console.log( 'new core with id ' + obj.coreid + ' and length ' + obj.data.length );
@@ -110,7 +110,7 @@
                         ping(b);
                         start();
                     } else {
-                        ping({id: colorAssignments[obj.coreid], size: obj.data.length, position: ids.indexOf(obj.coreid), coreid: obj.coreid, data: obj.data});
+                        ping({id: colorAssignments[obj.coreid], size: obj.data.length, position: ids.indexOf(obj.coreid), coreid: obj.coreid, data: obj.data, name: obj.name});
                     }
                 }, false);
                          
@@ -145,7 +145,8 @@
                     .offset([-10, 0])
                     .html(function(d) {
                         return "<strong>Core: </strong> <span>" + d.coreid + "</span><p></p>" +
-                        "<strong>Length: </strong> <span>" + d.size + "</span>";
+                        "<strong>Length: </strong> <span>" + d.size + "</span><p></p>" +
+                        "<strong>Name: </strong> <span>" + d.name + "</span>";
                     });
                               
                 svg.call(info);
