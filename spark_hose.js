@@ -1,11 +1,17 @@
-var serverEvent, express, app, request, extend, events, eventEmitter;
+var fs, serverEvent, express, app, request, extend, events, eventEmitter;
 
+fs = require('fs');
 serverEvent = require('server-event');
 request = require('request');
 app = require('express')();
 extend = require('xtend');
 events = require('events');
 eventEmitter = new events.EventEmitter();
+fs = require('fs');
+
+//get the access token from access_token.txt
+var access_token = fs.readFileSync('./access_token.txt', 'utf8');
+console.log("Access token: " + access_token);
 
 app.listen(80);
 
@@ -34,7 +40,7 @@ app.get('/', function (req, res) {
 
 //get the SSE events from the Spark Hose
 var requestObj = request({
-    uri: 'https://api.spark.io/v1/events?access_token=b0dd6a0954ee0bb2e489a3e9c6869405e39078ab',
+    uri: 'https://api.spark.io/v1/events?access_token=' + access_token,
     timeout: 999999999,
     method: "GET"
 });
