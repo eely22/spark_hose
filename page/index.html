@@ -89,7 +89,7 @@
                 var a = {id: "a"};
                 nodes.push(a);
                               
-                var source = new EventSource("http://198.0.150.12/events");
+                var source = new EventSource("/events");
                 if(typeof(EventSource) !== "undefined") {
                     console.log("SSE is Supported!");
                 } else {

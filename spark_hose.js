@@ -13,7 +13,7 @@ fs = require('fs');
 var access_token = fs.readFileSync('./access_token.txt', 'utf8');
 console.log("Access token: " + access_token);
 
-app.listen(80);
+app.listen(8080);
 
 serverEvent = serverEvent({ express : app });
 
